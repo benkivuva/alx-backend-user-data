@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """ Main 0
 """
 from api.v1.auth.auth import Auth
