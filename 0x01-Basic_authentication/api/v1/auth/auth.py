@@ -42,3 +42,12 @@ class Auth():
             Returns: None - request
         """
         return None
+    def authorization_header(self, request=None) -> str:
+        """Public method for authorization header
+        Returns:
+            None if request is None or the header key Authorization is not present
+            Otherwise, returns the value of the Authorization header
+        """
+        if request is None or 'Authorization' not in request.headers:
+            return None
+        return request.headers['Authorization']
