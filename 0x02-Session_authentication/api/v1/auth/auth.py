@@ -4,11 +4,17 @@ Class Auth
 """
 from flask import request
 from typing import List, TypeVar
+import os
 
 
 class Auth():
     """flask authorization Auth Class
     """
+
+    def __init__(self):
+        """ Constructor
+        """
+        pass
 
     def require_auth(self, path: str, excluded_paths: List[str]) -> bool:
         """Public method that define which routes don't need authentication.
@@ -32,10 +38,14 @@ class Auth():
             return True
 
     def authorization_header(self, request=None) -> str:
-        """Public method for authorization header
-            Returns: None - request
+        """Public method for authorization header. If request doesn’t
+        contain the header key Authorization, returns None. Otherwise,
+        return the value of the header request Authorization.
         """
-        return None
+        if request is None or 'Authorization' not in request.headers:
+            return None
+        else:
+            return request.headers.get('Authorization')
 
     def current_user(self, request=None) -> TypeVar('User'):
         """Public method that requires authentication
@@ -43,12 +53,11 @@ class Auth():
         """
         return None
 
-    def authorization_header(self, request=None) -> str:
-        """Public method for authorization header
-        Returns:
-            None if request is None or the header key Authorization isn't
-            present Otherwise, returns the value of the Authorization header
+    def session_cookie(self, request=None):
         """
-        if request is None or 'Authorization' not in request.headers:
+        This instance method that returns a cookie value from a request.
+        """
+        _my_session_id = os.getenv('SESSION_NAME')
+        if request is None:
             return None
-        return request.headers['Authorization']
+        return request.cookies.get(_my_session_id)
