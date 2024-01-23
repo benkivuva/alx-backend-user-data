@@ -1,35 +1,32 @@
-#!/usr/bin/python3
-"""DB module
+#!/usr/bin/env python3
 """
-from gettext import find
-from requests import session
+Contains DB class to handle data.
+"""
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.exc import InvalidRequestError
-
-
-from user import Base
-from user import User
+from sqlalchemy.orm.exc import NoResultFound
+from user import Base, User
 
 
 class DB:
-    """DB class
+    """
+    DB class to handle data
     """
 
     def __init__(self) -> None:
         """Initialize a new DB instance
         """
-        self._engine = create_engine("sqlite:///a.db", echo=True)
+        self._engine = create_engine("sqlite:///a.db", echo=False)
         Base.metadata.drop_all(self._engine)
         Base.metadata.create_all(self._engine)
         self.__session = None
 
     @property
     def _session(self) -> Session:
-        """Memoized session object
+        """Set and Return the user session.
         """
         if self.__session is None:
             DBSession = sessionmaker(bind=self._engine)
@@ -41,14 +38,14 @@ class DB:
         Method that takes two arguments to save the user to the database.
             Returns: A User object.
         """
-        if email and hashed_password:
-            user = User(
-                email=email, hashed_password=hashed_password
-            )
-            self._session.add(user)
-            self._session.commit()
-            return user
-        return None
+        if email is None or not isinstance(email, str):
+            return None
+        if hashed_password is None or not isinstance(hashed_password, str):
+            return None
+        new_user = User(email=email, hashed_password=hashed_password)
+        self._session.add(new_user)
+        self._session.commit()
+        return new_user
 
     def find_user_by(self, **kwargs) -> User:
         """
@@ -63,10 +60,10 @@ class DB:
         for k in input_keys:
             if k not in valid_arguments:
                 raise InvalidRequestError
-            user = self._session.query(User).filter_by(**kwargs).first()
-            if user is None:
-                raise NoResultFound
-            return user
+        user = self._session.query(User).filter_by(**kwargs).first()
+        if user is None:
+            raise NoResultFound
+        return user
 
     def update_user(self, user_id: int, **kwargs) -> None:
         """
@@ -77,11 +74,11 @@ class DB:
         valid_arguments = [
             'id', 'email', 'hashed_password', 'session_id', 'reset_token'
         ]
-        input_keys = kwargs.keys()
+
         user_located = self.find_user_by(id=user_id)
-        for k in input_keys:
-            if k not in valid_arguments:
+        for key, value in kwargs.items():
+            if key not in valid_arguments:
                 raise ValueError
-            user_located.k = kwargs.values()
-            self._session.commit()
-            return None
+        setattr(user_located, key, value)
+        self._session.commit()
+        return None
