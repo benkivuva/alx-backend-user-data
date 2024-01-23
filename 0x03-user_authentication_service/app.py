@@ -2,18 +2,40 @@
 """
 Route module for the API
 """
-from flask import jsonify
+from flask import Flask, jsonify, request
+from auth import Auth
+
 
 app = Flask(__name__)
+AUTH = Auth()
 
 
 @app.route('/', methods=['GET'], strict_slashes=False)
-def home() -> str:
+def index() -> str:
     """ GET /
     Return:
       - Welcome message.
     """
     return jsonify({"message": "Bienvenue"})
+
+
+@app.route('/users', methods=['POST'], strict_slashes=False)
+def users() -> str:
+    """ POST /users
+    Function to create user
+    Return:
+    - User object JSON represented
+    - 400 If the user is already registered
+    """
+    try:
+        form = request.form
+        email = form['email']
+        password = form['password']
+        new_user = AUTH.register_user(email, password)
+        if new_user:
+            return jsonify({"email": email, "message": "user created"})
+    except ValueError:
+        return jsonify({"message": "email already registered"}), 400
 
 
 if __name__ == "__main__":
