@@ -67,8 +67,8 @@ def logout():
     """ DELETE /sessions
     Function to respond to the DELETE /sessions route.
     Return:
-    - If the user exists destroy the session and redirect the user to '/'.
-    - 403 if the user does not exist
+    - If the user exists,  destroy the session and redirect the user to '/'.
+    - If the user does not exist, respond with a 403 HTTP status.
     """
     user_cookie = request.cookies.get('session_id', None)
     valid_user = AUTH.get_user_from_session_id(user_cookie)
@@ -76,8 +76,22 @@ def logout():
         abort(403)
     else:
         AUTH.destroy_session(valid_user.id)
-        return redirect(url_for('index'))
+        return redirect('/')
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port="5000")
+@app.route('/profile', methods=['GET'], strict_slashes=False)
+def profile():
+    """ GET /profile
+    Function to respond to the GET /profile route.
+    Return:
+    - If the user exists, respond with a 200 HTTP status and
+    a JSON payload.
+    - If the session ID is invalid or the user does not exist,
+    respond with a 403 HTTP status.
+    """
+    user_cookie = request.cookies.get('session_id', None)
+    valid_user = AUTH.get_user_from_session_id(user_cookie)
+    if valid_user is None or user_cookie is None:
+        abort(403)
+    else:
+        return jsonify({"email": valid_user.email}), 200
