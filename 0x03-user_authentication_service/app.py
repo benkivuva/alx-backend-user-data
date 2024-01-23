@@ -2,7 +2,8 @@
 """
 Route module for the API
 """
-from flask import Flask, jsonify, request, abort, make_response
+from flask import Flask, jsonify, request, abort, make_response, redirect
+from flask import url_for
 from auth import Auth
 
 
@@ -25,7 +26,7 @@ def users() -> str:
     Function to create user
     Return:
     - User object JSON represented
-    - 400 If the user is already registered
+    - 400 if the user is already registered
     """
     try:
         form = request.form
@@ -44,7 +45,7 @@ def login():
     Function to log in a session
     Return:
     - A JSON payload of the form
-    - 401 If the login information is incorrect
+    - 401 if the login information is incorrect
     """
 
     form = request.form
@@ -59,6 +60,23 @@ def login():
         return response
     else:
         abort(401)
+
+
+@app.route('/sessions', methods=['DELETE'], strict_slashes=False)
+def logout():
+    """ DELETE /sessions
+    Function to respond to the DELETE /sessions route.
+    Return:
+    - If the user exists destroy the session and redirect the user to '/'.
+    - 403 if the user does not exist
+    """
+    user_cookie = request.cookies.get('session_id', None)
+    valid_user = AUTH.get_user_from_session_id(user_cookie)
+    if valid_user is None or user_cookie is None:
+        abort(403)
+    else:
+        AUTH.destroy_session(valid_user.id)
+        return redirect(url_for('index'))
 
 
 if __name__ == "__main__":
