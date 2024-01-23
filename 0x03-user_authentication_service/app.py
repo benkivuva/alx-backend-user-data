@@ -95,3 +95,31 @@ def profile():
         abort(403)
     else:
         return jsonify({"email": valid_user.email}), 200
+
+@app.route('/reset_password', methods=['POST'], strict_slashes=False)
+def get_reset_password_token():
+    """ POST /reset_password'
+    Function to respond to the POST /reset_password' route.
+    Return:
+    - If the email is registered, generate a token, respond with
+    a 200 HTTP status and a JSON payload.
+    - If the email is not registered, respond with a 403 HTTP status.
+    """
+    form = request.form
+    email = form['email']
+
+
+
+    user_cookie = request.cookies.get('session_id', None)
+    valid_user = AUTH.get_user_from_session_id(user_cookie)
+    if valid_user is None or user_cookie is None:
+        abort(403)
+    else:
+        return jsonify({"email": valid_user.email}), 200
+
+
+
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port="5000")
