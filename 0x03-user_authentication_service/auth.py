@@ -6,7 +6,9 @@ import bcrypt
 from db import DB
 from user import User
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import InvalidRequestError
 import uuid
+from typing import Union
 
 
 def _hash_password(password: str) -> bytes:
@@ -76,9 +78,11 @@ class Auth():
 
     def create_session(self, email: str) -> str:
         """
-        Method takes an email string argument.
+        Method that takes an email string argument.
             Returns: Session ID as a string.
         """
+        if email is None:
+            return None
         try:
             user = self._db.find_user_by(email=email)
             if user:
@@ -117,7 +121,7 @@ class Auth():
         except NoResultFound:
             return None
 
-     def get_reset_password_token(self, email: str) -> str:
+    def get_reset_password_token(self, email: str) -> str:
         """
         Method that takes an email string argument.
             Returns: A token (UUID).
@@ -127,5 +131,23 @@ class Auth():
             new_token = _generate_uuid()
             self._db.update_user(user.id, reset_token=new_token)
             return new_token
+        except NoResultFound:
+            raise ValueError
+
+    def update_password(self, reset_token: str, password: str) -> None:
+        """
+        Method that takes reset_token string and password string
+        as arguments.
+            Returns: None.
+        """
+        if reset_token is None or password is None:
+            return None
+        try:
+            user = self._db.find_user_by(reset_token=reset_token)
+            hashed_password = _hash_password(password)
+            hashed_password = hashed_password.decode('utf8')
+            self._db.update_user(user.id, hashed_password=hashed_password)
+            self._db.update_user(user.id, reset_token=None)
+            return None
         except NoResultFound:
             raise ValueError
